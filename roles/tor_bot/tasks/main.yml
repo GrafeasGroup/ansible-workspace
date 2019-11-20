@@ -4,8 +4,12 @@
 - stat:
     path: /usr/local/bin/python3.8
   register: py_path
+- command: /usr/local/bin/python3.8 --version
+  when: py_path.stat.exists and py_path.stat.executable
+  register: py_version
+  changed_when: false
 - import_tasks: 'python.yml'
-  when: not py_path.stat.exists
+  when: not py_path.stat.exists or (py_version is defined and '3.8.0' not in py_version.stdout)
 - import_tasks: 'tor_moderator.yml'
 - import_tasks: 'tor_archivist.yml'
 - import_tasks: 'tor_ocr.yml'
