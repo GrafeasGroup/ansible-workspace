@@ -1,0 +1,14 @@
+---
+- group:
+    name: bots
+    system: true
+  become: true
+
+- user:
+    name: 'tor_bot'
+    group: 'bots'
+    home: '/var/tor'
+    system: true
+    create_home: true
+    append: true
+  become: true

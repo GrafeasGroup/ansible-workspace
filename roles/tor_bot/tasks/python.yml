@@ -1,0 +1,53 @@
+---
+
+- name: 'Create temp directory for Python build'
+  file:
+    state: 'directory'
+    path: '/tmp/python-build-dir'
+  register: 'python_tmpdir'
+
+- name: 'Download Python 3.8.0 source'
+  unarchive:
+    dest: '/tmp/python-build-dir'
+    remote_src: true
+    src: 'https://www.python.org/ftp/python/3.8.0/Python-3.8.0.tgz'
+
+- package:
+    name:
+      - 'gcc'
+      - 'openssl-devel'
+      - 'bzip2-devel'
+      - 'libffi-devel'
+      - 'make'
+    state: present
+  become: true
+
+- package:
+    name:
+      - 'readline-devel'
+      - 'sqlite-devel'
+      - 'gdbm-devel'
+      - 'libuuid-devel'
+      - 'xz-devel'
+      - 'glibc-devel'
+    state: present
+  become: true
+
+- name: Configure Python installer
+  shell: |
+    ./configure --enable-optimizations --enable-profiling --with-lto --with-assertions --with-ensurepip=upgrade
+  args:
+    chdir: '/tmp/python-build-dir/Python-3.8.0'
+  become: true
+- name: Compile Python 3.8.0
+  shell: |
+    make
+  args:
+    chdir: '/tmp/python-build-dir/Python-3.8.0'
+  become: true
+- name: Install Python 3.8.0 to /usr/local/bin
+  shell: |
+    make install
+  args:
+    chdir: '/tmp/python-build-dir/Python-3.8.0'
+  become: true

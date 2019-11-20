@@ -1,0 +1,90 @@
+---
+- import_tasks: 'bot_user.yml'
+
+# Setup a venv
+- stat:
+    path: /opt/tor_ocr
+  register: ocr_venv
+- name: 'Create venv for tor_ocr'
+  shell: |
+    /usr/local/bin/python3.8 -m venv /opt/tor_ocr
+  when: ocr_venv.stat.isdir is not defined or not ocr_venv.stat.isdir
+  become: true
+
+# Pull down and install the python whl file from the github releases
+- name: 'Gather currently installed version of tor_ocr'
+  shell: |
+    source /opt/tor_ocr/bin/activate
+    pip freeze
+  register: ocr_pip_freeze
+  changed_when: false
+- name: 'Download v{{ ocr_version }} of tor_ocr'
+  get_url:
+    dest: '/tmp/tor_ocr-{{ ocr_version }}-py3-none-any.whl'
+    url: 'https://github.com/GrafeasGroup/tor_ocr/releases/download/v{{ ocr_version }}/tor_ocr-{{ ocr_version }}-py3-none-any.whl'
+  when: "('tor-ocr=='+ocr_version) not in ocr_pip_freeze.stdout_lines"
+- name: 'Install v{{ ocr_version }} of tor_ocr'
+  shell: |
+    source /opt/tor_ocr/bin/activate
+    pip install /tmp/tor_ocr-{{ ocr_version }}-py3-none-any.whl
+  become: true
+  when: "('tor-ocr=='+ocr_version) not in ocr_pip_freeze.stdout_lines"
+
+# Install credentials files (praw.ini)
+
+- blockinfile:
+    path: /opt/tor_ocr/runtime.env
+    block: |-
+      praw_username={{ ocr_username | quote }}
+      praw_password={{ ocr_password | quote }}
+      praw_client_id={{ ocr_client_id | quote }}
+      praw_client_secret={{ ocr_client_secret | quote }}
+      praw_user_agent='python:org.grafeas.tor_ocr:{{ ocr_version }} (by /u/itsthejoker)'
+    create: true
+    marker: '# {mark} PRAW CREDENTIALS'
+- lineinfile:
+    path: /opt/tor_ocr/runtime.env
+    regex: '^BOT_NAME='
+    line: "BOT_NAME='tor_ocr'"
+  become: true
+- lineinfile:
+    path: /opt/tor_ocr/runtime.env
+    regex: '^REDIS_CONNECTION_URL='
+    line: "REDIS_CONNECTION_URL={{ redis_uri | quote }}"
+  become: true
+- lineinfile:
+    path: /opt/tor_ocr/runtime.env
+    regex: '^BUGSNAG_API_KEY='
+    line: "BUGSNAG_API_KEY={{ bugsnag_key | quote }}"
+  become: true
+- lineinfile:
+    path: /opt/tor_ocr/runtime.env
+    regex: '^SLACK_API_KEY='
+    line: "SLACK_API_KEY={{ slack_key | quote }}"
+  become: true
+- file:
+    path: /var/tor/tor_ocr
+    state: directory
+    owner: 'tor_bot'
+    group: 'bots'
+  become: true
+- lineinfile:
+    path: /opt/tor_ocr/runtime.env
+    regex: '^HEARTBEAT_FILE='
+    line: "HEARTBEAT_FILE='/var/tor/tor_ocr/heartbeat.port'"
+  become: true
+
+# Install systemd unit
+- template:
+    src: 'systemd-service.j2'
+    dest: '/etc/systemd/system/tor_ocr.service'
+  become: true
+  vars:
+    description: 'The content curation bot for /r/TranscribersOfReddit'
+    github_repo_url: 'https://github.com/GrafeasGroup/tor_ocr'
+    bot: 'tor_ocr'
+    bin: 'tor-apprentice'
+- systemd:
+    daemon_reload: true
+    enabled: true
+    name: 'tor_ocr.service'

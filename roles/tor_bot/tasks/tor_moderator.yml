@@ -1,0 +1,90 @@
+---
+- import_tasks: 'bot_user.yml'
+
+# Setup a venv
+- stat:
+    path: /opt/tor_moderator
+  register: moderator_venv
+- name: 'Create venv for tor_moderator'
+  shell: |
+    /usr/local/bin/python3.8 -m venv /opt/tor_moderator
+  when: moderator_venv.stat.isdir is not defined or not moderator_venv.stat.isdir
+  become: true
+
+# Pull down and install the python whl file from the github releases
+- name: 'Gather currently installed version of tor_moderator'
+  shell: |
+    source /opt/tor_moderator/bin/activate
+    pip freeze
+  register: moderator_pip_freeze
+  changed_when: false
+- name: 'Download v{{ moderator_version }} of tor_moderator'
+  get_url:
+    dest: '/tmp/tor-{{ moderator_version }}-py3-none-any.whl'
+    url: 'https://github.com/GrafeasGroup/tor/releases/download/v{{ moderator_version }}/tor-{{ moderator_version }}-py3-none-any.whl'
+  when: "('tor=='+moderator_version) not in moderator_pip_freeze.stdout_lines"
+- name: 'Install v{{ moderator_version }} of tor_moderator'
+  shell: |
+    source /opt/tor_moderator/bin/activate
+    pip install /tmp/tor-{{ moderator_version }}-py3-none-any.whl
+  become: true
+  when: "('tor=='+moderator_version) not in moderator_pip_freeze.stdout_lines"
+
+# Install credentials files (praw.ini)
+
+- blockinfile:
+    path: /opt/tor_moderator/runtime.env
+    block: |-
+      praw_username={{ moderator_username | quote }}
+      praw_password={{ moderator_password | quote }}
+      praw_client_id={{ moderator_client_id | quote }}
+      praw_client_secret={{ moderator_client_secret | quote }}
+      praw_user_agent='python:org.grafeas.tor_moderator:{{ moderator_version }} (by /u/itsthejoker)'
+    create: true
+    marker: '# {mark} PRAW CREDENTIALS'
+- lineinfile:
+    path: /opt/tor_moderator/runtime.env
+    regex: '^BOT_NAME='
+    line: "BOT_NAME='tor'"
+  become: true
+- lineinfile:
+    path: /opt/tor_moderator/runtime.env
+    regex: '^REDIS_CONNECTION_URL='
+    line: "REDIS_CONNECTION_URL={{ redis_uri | quote }}"
+  become: true
+- lineinfile:
+    path: /opt/tor_moderator/runtime.env
+    regex: '^BUGSNAG_API_KEY='
+    line: "BUGSNAG_API_KEY={{ bugsnag_key | quote }}"
+  become: true
+- lineinfile:
+    path: /opt/tor_moderator/runtime.env
+    regex: '^SLACK_API_KEY='
+    line: "SLACK_API_KEY={{ slack_key | quote }}"
+  become: true
+- file:
+    path: /var/tor/tor_moderator
+    state: directory
+    owner: 'tor_bot'
+    group: 'bots'
+  become: true
+- lineinfile:
+    path: /opt/tor_moderator/runtime.env
+    regex: '^HEARTBEAT_FILE='
+    line: "HEARTBEAT_FILE='/var/tor/tor_moderator/heartbeat.port'"
+  become: true
+
+# Install systemd unit
+- template:
+    src: 'systemd-service.j2'
+    dest: '/etc/systemd/system/tor_moderator.service'
+  become: true
+  vars:
+    description: 'The claim, done, and scoring bot for /r/TranscribersOfReddit'
+    github_repo_url: 'https://github.com/GrafeasGroup/tor'
+    bot: 'tor_moderator'
+    bin: 'tor-moderator'
+- systemd:
+    daemon_reload: true
+    enabled: true
+    name: 'tor_moderator.service'

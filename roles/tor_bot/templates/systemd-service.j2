@@ -1,0 +1,21 @@
+[Unit]
+Description={{ description }}
+Documentation={{ github_repo_url }}
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=/opt/{{ bot }}/runtime.env
+ExecStart=/opt/{{ bot }}/bin/{{ bin }}
+User=tor_bot
+Group=bots
+WorkingDirectory=/var/tor/{{ bot }}
+KillSignal=SIGINT
+Restart=on-failure
+TimeoutStopSec=360
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier={{ bot }}
+
+[Install]
+WantedBy=multi-user.target

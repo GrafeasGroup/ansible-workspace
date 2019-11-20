@@ -1,0 +1,11 @@
+---
+# tasks file for tor_bot
+
+- stat:
+    path: /usr/local/bin/python3.8
+  register: py_path
+- import_tasks: 'python.yml'
+  when: not py_path.stat.exists
+- import_tasks: 'tor_moderator.yml'
+- import_tasks: 'tor_archivist.yml'
+- import_tasks: 'tor_ocr.yml'
