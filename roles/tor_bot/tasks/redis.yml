@@ -1,0 +1,16 @@
+---
+- yum:
+    name: epel-release
+    state: latest
+  become: true
+
+- yum:
+    name: redis
+    state: present
+    update_cache: true
+  become: true
+
+- service:
+    name: redis
+    state: started
+    enabled: true

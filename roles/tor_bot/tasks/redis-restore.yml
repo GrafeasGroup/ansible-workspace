@@ -1,0 +1,27 @@
+---
+
+- stat:
+    path: /opt/redis-restore.rdb
+  register: redis_restore
+
+- service:
+    name: redis
+    state: stopped
+  become: true
+  when: redis_restore.stat.exists
+
+- name: Restore redis data from backup
+  command: mv /opt/redis-restore.rdb /var/lib/redis/dump.rdb
+  become: true
+  when: redis_restore.stat.exists
+
+- file:
+    path: /var/lib/redis/dump.rdb
+    owner: 'redis'
+    group: 'redis'
+  become: true
+
+- service:
+    name: redis
+    state: started
+  become: true
