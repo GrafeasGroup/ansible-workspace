@@ -1,0 +1,4 @@
+---
+# defaults file for os_base
+password_salt: 'ChangeMePlease'
+admin_info: []

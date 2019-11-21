@@ -1,0 +1,26 @@
+---
+
+- user:
+    name: '{{ username }}'
+    password: '{{ password_hash }}'
+    comment: 'administrative user'
+    shell: /bin/bash
+    append: true
+    groups:
+      - sudo
+  become: true
+
+- file:
+    state: directory
+    path: '/home/{{ username }}/.ssh'
+    owner: '{{ username }}'
+    group: '{{ username }}'
+    mode: 0700
+  become: true
+
+- lineinfile:
+    line: '{{ public_key }}'
+    path: '/home/{{ username }}/.ssh/authorized_keys'
+    owner: '{{ username }}'
+    group: '{{ username }}'
+    mode: 0600
