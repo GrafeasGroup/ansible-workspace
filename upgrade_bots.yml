@@ -1,0 +1,13 @@
+---
+
+- hosts: bot_servers
+  tasks:
+    - import_role:
+        name: 'tor_bot'
+        tasks_from: 'tor_moderator.yml'
+    - import_role:
+        name: 'tor_bot'
+        tasks_from: 'tor_archivist.yml'
+    - import_role:
+        name: 'tor_bot'
+        tasks_from: 'tor_ocr.yml'
