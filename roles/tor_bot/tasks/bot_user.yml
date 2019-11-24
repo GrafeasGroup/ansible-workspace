@@ -1,10 +1,12 @@
 ---
-- group:
+- name: Create group "bots" for "tor_bot" user account
+  group:
     name: bots
     system: true
   become: true
 
-- user:
+- name: Create "tor_bot" user account under which the ToR bots can execute
+  user:
     name: 'tor_bot'
     group: 'bots'
     home: '/var/tor'

@@ -29,6 +29,8 @@
     pip install /tmp/tor-{{ moderator_version }}-py3-none-any.whl
   become: true
   when: "('tor=='+moderator_version) not in moderator_pip_freeze.stdout_lines"
+  notify:
+    - restart moderator bot
 
 # Install credentials files (praw.ini)
 
@@ -42,26 +44,36 @@
       praw_user_agent='python:org.grafeas.tor_moderator:{{ moderator_version }} (by /u/itsthejoker)'
     create: true
     marker: '# {mark} PRAW CREDENTIALS'
+  notify:
+    - restart moderator bot
 - lineinfile:
     path: /opt/tor_moderator/runtime.env
     regex: '^BOT_NAME='
     line: "BOT_NAME='tor'"
   become: true
+  notify:
+    - restart moderator bot
 - lineinfile:
     path: /opt/tor_moderator/runtime.env
     regex: '^REDIS_CONNECTION_URL='
     line: "REDIS_CONNECTION_URL={{ redis_uri | quote }}"
   become: true
+  notify:
+    - restart moderator bot
 - lineinfile:
     path: /opt/tor_moderator/runtime.env
     regex: '^BUGSNAG_API_KEY='
     line: "BUGSNAG_API_KEY={{ bugsnag_key | quote }}"
   become: true
+  notify:
+    - restart moderator bot
 - lineinfile:
     path: /opt/tor_moderator/runtime.env
     regex: '^SLACK_API_KEY='
     line: "SLACK_API_KEY={{ slack_key | quote }}"
   become: true
+  notify:
+    - restart moderator bot
 - file:
     path: /var/tor/tor_moderator
     state: directory
@@ -73,6 +85,8 @@
     regex: '^HEARTBEAT_FILE='
     line: "HEARTBEAT_FILE='/var/tor/tor_moderator/heartbeat.port'"
   become: true
+  notify:
+    - restart moderator bot
 
 # Install systemd unit
 - template:
@@ -84,6 +98,8 @@
     github_repo_url: 'https://github.com/GrafeasGroup/tor'
     bot: 'tor_moderator'
     bin: 'tor-moderator'
+  notify:
+    - restart moderator bot
 - systemd:
     daemon_reload: true
     enabled: true

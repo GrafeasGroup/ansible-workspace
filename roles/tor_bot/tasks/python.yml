@@ -11,7 +11,8 @@
     remote_src: true
     src: https://www.python.org/ftp/python/3.8.0/Python-3.8.0.tgz
 
-- package:
+- name: Install system packages to compile python
+  package:
     name:
       - gcc
       - openssl-devel
@@ -21,7 +22,8 @@
     state: present
   become: true
 
-- package:
+- name: Install system packages to enable python extensions
+  package:
     name:
       - readline-devel
       - sqlite-devel

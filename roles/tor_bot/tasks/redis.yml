@@ -1,16 +1,24 @@
 ---
-- yum:
+- name: Enable EPEL repositories
+  yum:
     name: epel-release
     state: latest
   become: true
 
-- yum:
-    name: redis
-    state: present
+- name: Update package cache
+  yum:
     update_cache: true
   become: true
 
-- service:
+- name: Install redis
+  package:
+    name: redis
+    state: present
+  become: true
+
+- name: Start redis service
+  service:
     name: redis
     state: started
     enabled: true
+  become: true

@@ -1,10 +1,11 @@
 ---
-
-- stat:
+- name: Get path to RDB backup from which to restory
+  stat:
     path: /opt/redis-restore.rdb
   register: redis_restore
 
-- service:
+- name: Stop redis service
+  service:
     name: redis
     state: stopped
   become: true
@@ -15,13 +16,15 @@
   become: true
   when: redis_restore.stat.exists
 
-- file:
+- name: Set proper ownership settings for restored RDB
+  file:
     path: /var/lib/redis/dump.rdb
     owner: 'redis'
     group: 'redis'
   become: true
 
-- service:
+- name: 'Start redis service'
+  service:
     name: redis
     state: started
   become: true

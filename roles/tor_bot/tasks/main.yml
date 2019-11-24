@@ -1,10 +1,15 @@
 ---
 # tasks file for tor_bot
 
-- stat:
+- name: populate service facts
+  service_facts:
+
+- name: 'Get python executable'
+  stat:
     path: /usr/local/bin/python3.8
   register: py_path
-- command: /usr/local/bin/python3.8 --version
+- name: 'Get current python version'
+  command: /usr/local/bin/python3.8 --version
   when: py_path.stat.exists and py_path.stat.executable
   register: py_version
   changed_when: false

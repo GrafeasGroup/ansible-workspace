@@ -1,2 +1,23 @@
 ---
 # handlers file for tor_bot
+- name: restart moderator bot
+  listen: 'restart tor bots'
+  systemd:
+    daemon_reload: true
+    name: 'tor_moderator.service'
+    action: restarted
+  when: ansible_facts.services['tor_moderator.service'] is defined and ansible_facts.services['tor_moderator.service'].state == 'running'
+- name: restart archivist bot
+  listen: 'restart tor bots'
+  systemd:
+    daemon_reload: true
+    name: 'tor_archivist.service'
+    action: restarted
+  when: ansible_facts.services['tor_archivist.service'] is defined and ansible_facts.services['tor_archivist.service'].state == 'running'
+- name: restart ocr bot
+  listen: 'restart tor bots'
+  systemd:
+    daemon_reload: true
+    name: 'tor_ocr.service'
+    action: restarted
+  when: ansible_facts.services['tor_ocr.service'] is defined and ansible_facts.services['tor_ocr.service'].state == 'running'

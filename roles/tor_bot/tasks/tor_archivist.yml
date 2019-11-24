@@ -2,7 +2,8 @@
 - import_tasks: 'bot_user.yml'
 
 # Setup a venv
-- stat:
+- name: Get venv path
+  stat:
     path: /opt/tor_archivist
   register: archivist_venv
 - name: 'Create venv for tor_archivist'
@@ -29,6 +30,8 @@
     pip install /tmp/tor_archivist-{{ archivist_version }}-py3-none-any.whl
   become: true
   when: "('tor-archivist=='+archivist_version) not in archivist_pip_freeze.stdout_lines"
+  notify:
+    - restart archivist bot
 
 # Install credentials files (praw.ini)
 
@@ -42,26 +45,36 @@
       praw_user_agent='python:org.grafeas.tor_archivist:{{ archivist_version }} (by /u/itsthejoker)'
     create: true
     marker: '# {mark} PRAW CREDENTIALS'
+  notify:
+    - restart archivist bot
 - lineinfile:
     path: /opt/tor_archivist/runtime.env
     regex: '^BOT_NAME='
     line: "BOT_NAME='tor_archivist'"
   become: true
+  notify:
+    - restart archivist bot
 - lineinfile:
     path: /opt/tor_archivist/runtime.env
     regex: '^REDIS_CONNECTION_URL='
     line: "REDIS_CONNECTION_URL={{ redis_uri | quote }}"
   become: true
+  notify:
+    - restart archivist bot
 - lineinfile:
     path: /opt/tor_archivist/runtime.env
     regex: '^BUGSNAG_API_KEY='
     line: "BUGSNAG_API_KEY={{ bugsnag_key | quote }}"
   become: true
+  notify:
+    - restart archivist bot
 - lineinfile:
     path: /opt/tor_archivist/runtime.env
     regex: '^SLACK_API_KEY='
     line: "SLACK_API_KEY={{ slack_key | quote }}"
   become: true
+  notify:
+    - restart archivist bot
 - file:
     path: /var/tor/tor_archivist
     state: directory
@@ -73,6 +86,8 @@
     regex: '^HEARTBEAT_FILE='
     line: "HEARTBEAT_FILE='/var/tor/tor_archivist/heartbeat.port'"
   become: true
+  notify:
+    - restart archivist bot
 
 # Install systemd unit
 - template:
@@ -84,6 +99,8 @@
     github_repo_url: 'https://github.com/GrafeasGroup/tor_archivist'
     bot: 'tor_archivist'
     bin: 'tor-archivist'
+  notify:
+    - restart archivist bot
 - systemd:
     daemon_reload: true
     enabled: true
