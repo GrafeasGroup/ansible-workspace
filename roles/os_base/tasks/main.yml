@@ -1,21 +1,25 @@
 ---
 
-- yum:
+- name: Apply system updates
+  yum:
     name: '*'
     state: latest
 
-- file:
+- name: Create journald persistence directory
+  file:
     state: directory
     path: /var/log/journal
   become: true
   notify: restart journald
 
-- group: 
+- name: Create local 'sudo' group
+  group:
     name: sudo
     state: present
   become: true
 
-- lineinfile:
+- name: Set 'sudo' group to allow members to run as root (with password prompt)
+  lineinfile:
     regexp: '^%sudo '
     line: '%sudo ALL=(ALL) ALL'
     path: /etc/sudoers.d/sudoers

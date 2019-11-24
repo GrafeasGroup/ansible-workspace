@@ -6,14 +6,13 @@
   stat:
     path: /opt/tor_archivist
   register: archivist_venv
-- name: 'Create venv for tor_archivist'
-  shell: |
-    /usr/local/bin/python3.8 -m venv /opt/tor_archivist
+- name: Create venv for tor_archivist
+  command: /usr/local/bin/python3.8 -m venv /opt/tor_archivist
   when: archivist_venv.stat.isdir is not defined or not archivist_venv.stat.isdir
   become: true
 
 # Pull down and install the python whl file from the github releases
-- name: 'Gather currently installed version of tor_archivist'
+- name: Gather currently installed version of tor_archivist
   shell: |
     source /opt/tor_archivist/bin/activate
     pip freeze
@@ -33,9 +32,15 @@
   notify:
     - restart archivist bot
 
-# Install credentials files (praw.ini)
-
-- blockinfile:
+- name: Create tor_archivist runtime directory
+  file:
+    path: /var/tor/tor_archivist
+    state: directory
+    owner: tor_bot
+    group: bots
+  become: true
+- name: Add reddit creds to runtime environment for tor_archivist.service
+  blockinfile:
     path: /opt/tor_archivist/runtime.env
     block: |-
       praw_username={{ archivist_username | quote }}
@@ -47,61 +52,35 @@
     marker: '# {mark} PRAW CREDENTIALS'
   notify:
     - restart archivist bot
-- lineinfile:
+- name: Add bot metadata to runtime environment for tor_archivist.service
+  blockinfile:
     path: /opt/tor_archivist/runtime.env
-    regex: '^BOT_NAME='
-    line: "BOT_NAME='tor_archivist'"
-  become: true
-  notify:
-    - restart archivist bot
-- lineinfile:
-    path: /opt/tor_archivist/runtime.env
-    regex: '^REDIS_CONNECTION_URL='
-    line: "REDIS_CONNECTION_URL={{ redis_uri | quote }}"
-  become: true
-  notify:
-    - restart archivist bot
-- lineinfile:
-    path: /opt/tor_archivist/runtime.env
-    regex: '^BUGSNAG_API_KEY='
-    line: "BUGSNAG_API_KEY={{ bugsnag_key | quote }}"
-  become: true
-  notify:
-    - restart archivist bot
-- lineinfile:
-    path: /opt/tor_archivist/runtime.env
-    regex: '^SLACK_API_KEY='
-    line: "SLACK_API_KEY={{ slack_key | quote }}"
-  become: true
-  notify:
-    - restart archivist bot
-- file:
-    path: /var/tor/tor_archivist
-    state: directory
-    owner: 'tor_bot'
-    group: 'bots'
-  become: true
-- lineinfile:
-    path: /opt/tor_archivist/runtime.env
-    regex: '^HEARTBEAT_FILE='
-    line: "HEARTBEAT_FILE='/var/tor/tor_archivist/heartbeat.port'"
+    block: |
+      BOT_NAME='tor_archivist'
+      REDIS_CONNECTION_URL={{ redis_uri | quote }}
+      HEARTBEAT_FILE='/var/tor/tor_archivist/heartbeat.port'
+      BUGSNAG_API_KEY={{ bugsnag_key | quote }}
+      SLACK_API_KEY={{ slack_key | quote }}
+    create: true
+    marker: '# {mark} TOR BOT INFO'
   become: true
   notify:
     - restart archivist bot
 
-# Install systemd unit
-- template:
-    src: 'systemd-service.j2'
-    dest: '/etc/systemd/system/tor_archivist.service'
+- name: Create 'tor_archivist.service' systemd unit
+  template:
+    src: systemd-service.j2
+    dest: /etc/systemd/system/tor_archivist.service
   become: true
   vars:
-    description: 'The content curation bot for /r/TranscribersOfReddit'
-    github_repo_url: 'https://github.com/GrafeasGroup/tor_archivist'
-    bot: 'tor_archivist'
-    bin: 'tor-archivist'
+    description: The content curation bot for /r/TranscribersOfReddit
+    github_repo_url: https://github.com/GrafeasGroup/tor_archivist
+    bot: tor_archivist
+    bin: tor-archivist
   notify:
     - restart archivist bot
-- systemd:
+- name: Set 'tor_archivist.service' to start at boot
+  systemd:
     daemon_reload: true
     enabled: true
-    name: 'tor_archivist.service'
+    name: tor_archivist.service

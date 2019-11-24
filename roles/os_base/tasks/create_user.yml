@@ -1,16 +1,18 @@
 ---
 
-- user:
+- name: "Create administrative user '{{ username }}'"
+  user:
     name: '{{ username }}'
     password: '{{ password_hash }}'
-    comment: 'administrative user'
+    comment: administrative user
     shell: /bin/bash
     append: true
     groups:
       - sudo
   become: true
 
-- file:
+- name: "Create '~/.ssh' directory for '{{ username }}'"
+  file:
     state: directory
     path: '/home/{{ username }}/.ssh'
     owner: '{{ username }}'
@@ -18,7 +20,8 @@
     mode: 0700
   become: true
 
-- lineinfile:
+- name: "Assign public key to login as '{{ username }}'"
+  lineinfile:
     line: '{{ public_key }}'
     path: '/home/{{ username }}/.ssh/authorized_keys'
     owner: '{{ username }}'

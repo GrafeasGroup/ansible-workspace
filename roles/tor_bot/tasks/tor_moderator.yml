@@ -1,18 +1,16 @@
 ---
 - import_tasks: 'bot_user.yml'
 
-# Setup a venv
-- stat:
+- name: Get venv path
+  stat:
     path: /opt/tor_moderator
   register: moderator_venv
-- name: 'Create venv for tor_moderator'
-  shell: |
-    /usr/local/bin/python3.8 -m venv /opt/tor_moderator
+- name: Create venv for tor_moderator
+  command: /usr/local/bin/python3.8 -m venv /opt/tor_moderator
   when: moderator_venv.stat.isdir is not defined or not moderator_venv.stat.isdir
   become: true
 
-# Pull down and install the python whl file from the github releases
-- name: 'Gather currently installed version of tor_moderator'
+- name: Gather currently installed version of tor_moderator
   shell: |
     source /opt/tor_moderator/bin/activate
     pip freeze
@@ -32,9 +30,15 @@
   notify:
     - restart moderator bot
 
-# Install credentials files (praw.ini)
-
-- blockinfile:
+- name: Create tor_moderator runtime directory
+  file:
+    path: /var/tor/tor_moderator
+    state: directory
+    owner: 'tor_bot'
+    group: 'bots'
+  become: true
+- name: Add reddit creds to runtime environment for tor_moderator.service
+  blockinfile:
     path: /opt/tor_moderator/runtime.env
     block: |-
       praw_username={{ moderator_username | quote }}
@@ -46,61 +50,35 @@
     marker: '# {mark} PRAW CREDENTIALS'
   notify:
     - restart moderator bot
-- lineinfile:
+- name: Add bot metadata to runtime environment for tor_moderator.service
+  blockinfile:
     path: /opt/tor_moderator/runtime.env
-    regex: '^BOT_NAME='
-    line: "BOT_NAME='tor'"
-  become: true
-  notify:
-    - restart moderator bot
-- lineinfile:
-    path: /opt/tor_moderator/runtime.env
-    regex: '^REDIS_CONNECTION_URL='
-    line: "REDIS_CONNECTION_URL={{ redis_uri | quote }}"
-  become: true
-  notify:
-    - restart moderator bot
-- lineinfile:
-    path: /opt/tor_moderator/runtime.env
-    regex: '^BUGSNAG_API_KEY='
-    line: "BUGSNAG_API_KEY={{ bugsnag_key | quote }}"
-  become: true
-  notify:
-    - restart moderator bot
-- lineinfile:
-    path: /opt/tor_moderator/runtime.env
-    regex: '^SLACK_API_KEY='
-    line: "SLACK_API_KEY={{ slack_key | quote }}"
-  become: true
-  notify:
-    - restart moderator bot
-- file:
-    path: /var/tor/tor_moderator
-    state: directory
-    owner: 'tor_bot'
-    group: 'bots'
-  become: true
-- lineinfile:
-    path: /opt/tor_moderator/runtime.env
-    regex: '^HEARTBEAT_FILE='
-    line: "HEARTBEAT_FILE='/var/tor/tor_moderator/heartbeat.port'"
+    block: |
+      BOT_NAME='tor'
+      REDIS_CONNECTION_URL={{ redis_uri | quote }}
+      HEARTBEAT_FILE='/var/tor/tor_moderator/heartbeat.port'
+      BUGSNAG_API_KEY={{ bugsnag_key | quote }}
+      SLACK_API_KEY={{ slack_key | quote }}
+    create: true
+    marker: '# {mark} TOR BOT INFO'
   become: true
   notify:
     - restart moderator bot
 
-# Install systemd unit
-- template:
-    src: 'systemd-service.j2'
-    dest: '/etc/systemd/system/tor_moderator.service'
+- name: Create 'tor_moderator.service' systemd unit
+  template:
+    src: systemd-service.j2
+    dest: /etc/systemd/system/tor_moderator.service
   become: true
   vars:
-    description: 'The claim, done, and scoring bot for /r/TranscribersOfReddit'
-    github_repo_url: 'https://github.com/GrafeasGroup/tor'
-    bot: 'tor_moderator'
-    bin: 'tor-moderator'
+    description: The claim, done, and scoring bot for /r/TranscribersOfReddit
+    github_repo_url: https://github.com/GrafeasGroup/tor
+    bot: tor_moderator
+    bin: tor-moderator
   notify:
     - restart moderator bot
-- systemd:
+- name: Set 'tor_moderator.service' to start at boot
+  systemd:
     daemon_reload: true
     enabled: true
-    name: 'tor_moderator.service'
+    name: tor_moderator.service
