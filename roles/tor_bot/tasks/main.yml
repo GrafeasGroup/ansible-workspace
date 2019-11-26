@@ -8,3 +8,4 @@
 - import_tasks: 'tor_moderator.yml'
 - import_tasks: 'tor_archivist.yml'
 - import_tasks: 'tor_ocr.yml'
+- import_tasks: 'tor_tools.yml'
