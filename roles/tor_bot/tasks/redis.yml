@@ -2,7 +2,7 @@
 - name: Enable EPEL repositories
   yum:
     name: epel-release
-    state: latest
+    state: present
   become: true
 
 - name: Update package cache
