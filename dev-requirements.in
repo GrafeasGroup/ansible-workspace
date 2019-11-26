@@ -1,2 +1,3 @@
--r requirements.in
+-c requirements.txt
+ansible
 molecule[docker]
