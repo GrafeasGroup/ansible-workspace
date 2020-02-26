@@ -8,8 +8,8 @@ ansible-lint==4.1.0 \
     --hash=sha256:9430ea6e654ba4bf5b9c6921efc040f46cda9c4fd2896a99ff71d21037bcb123 \
     --hash=sha256:c1b442b01091eca13ef11d98c3376e9489ba5b69a8467828ca86044f384bc0a1 \
     # via molecule
-ansible==2.9.1 \
-    --hash=sha256:d87cb25df02284d59226ff1d935d7075a175f31d0db83564c2f1ca28bbbd4cb4
+ansible==2.9.2 \
+    --hash=sha256:2f83f8ccc50640aa41a24f6e7757ac06b0ee6189fdcaacab68851771d3b42f3a
 anyconfig==0.9.7 \
     --hash=sha256:4d6016ae6eecc5e502bc7e99ae0639c5710c5c67bde5f21b06b9eaafd9ce0e7e \
     # via molecule
@@ -409,4 +409,4 @@ yamllint==1.18.0 \
 
 # WARNING: The following packages were not pinned, but pip requires them to be
 # pinned when the requirements file includes hashes. Consider using the --allow-unsafe flag.
-# setuptools==42.0.1        # via cerberus
+# setuptools
