@@ -71,7 +71,7 @@ The output of `pip-compile` is a file that retains full backward-compatibility w
 To modify the dependencies, modify the input file(s) (`dev-requirements.in` if it's specific to developing ansible code but not needed at runtime, `requirements.in` otherwise) and run `pip-compile --generate-hashes` on the pairings like so:
 
 ```
-(venv) ~/src/ansible-workspace $ pip-compile --generate-hashes --out-file requirements.in requirements.txt
+(venv) ~/src/ansible-workspace $ pip-compile --generate-hashes --output-file requirements.txt requirements.in
 ```
 
 The resulting changes to the input and output files should be tracked in the repository.
