@@ -9,6 +9,7 @@
   file:
     state: directory
     path: /var/log/journal
+    mode: '0700'
   become: true
   notify: restart journald
 

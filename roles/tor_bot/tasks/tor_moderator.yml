@@ -36,6 +36,7 @@
     state: directory
     owner: 'tor_bot'
     group: 'bots'
+    mode: '0700'
   become: true
 - name: Add reddit creds to runtime environment for tor_moderator.service
   blockinfile:
@@ -48,6 +49,7 @@
       praw_user_agent='python:org.grafeas.tor_moderator:{{ moderator_version }} (by /u/itsthejoker)'
     create: true
     marker: '# {mark} PRAW CREDENTIALS'
+    mode: '0600'
   notify:
     - restart moderator bot
 - name: Add bot metadata to runtime environment for tor_moderator.service
@@ -61,6 +63,7 @@
       SLACK_API_KEY={{ slack_key | quote }}
     create: true
     marker: '# {mark} TOR BOT INFO'
+    mode: '0600'
   become: true
   notify:
     - restart moderator bot
@@ -69,6 +72,7 @@
   template:
     src: systemd-service.j2
     dest: /etc/systemd/system/tor_moderator.service
+    mode: '0644'
   become: true
   vars:
     description: The claim, done, and scoring bot for /r/TranscribersOfReddit

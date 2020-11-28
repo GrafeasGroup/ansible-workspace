@@ -14,14 +14,15 @@
   file:
     state: directory
     path: /opt/python-build-dir
-  when: not py_path.stat.exists or (py_version is defined and '3.8.0' not in py_version.stdout)
+    mode: '700'
+  when: not py_path.stat.exists or (py_version is defined and '3.8.' not in py_version.stdout)
 
-- name: Download Python 3.8.0 source
+- name: Download Python 3.8 source
   unarchive:
     dest: /opt/python-build-dir
     remote_src: true
     src: https://www.python.org/ftp/python/3.8.0/Python-3.8.0.tgz
-  when: not py_path.stat.exists or (py_version is defined and '3.8.0' not in py_version.stdout)
+  when: not py_path.stat.exists or (py_version is defined and '3.8.' not in py_version.stdout)
 
 - name: Install system packages to compile python
   package:
@@ -33,7 +34,7 @@
       - make
     state: present
   become: true
-  when: not py_path.stat.exists or (py_version is defined and '3.8.0' not in py_version.stdout)
+  when: not py_path.stat.exists or (py_version is defined and '3.8.' not in py_version.stdout)
 
 - name: Install system packages to enable python extensions
   package:
@@ -46,26 +47,26 @@
       - glibc-devel
     state: present
   become: true
-  when: not py_path.stat.exists or (py_version is defined and '3.8.0' not in py_version.stdout)
+  when: not py_path.stat.exists or (py_version is defined and '3.8.' not in py_version.stdout)
 
 - name: Configure Python installer
   command: ./configure --enable-optimizations --enable-profiling --with-lto --with-assertions --with-ensurepip=upgrade
   args:
     chdir: /opt/python-build-dir/Python-3.8.0
   become: true
-  when: not py_path.stat.exists or (py_version is defined and '3.8.0' not in py_version.stdout)
+  when: not py_path.stat.exists or (py_version is defined and '3.8.' not in py_version.stdout)
 - name: Compile Python 3.8.0
   command: make
   args:
     chdir: /opt/python-build-dir/Python-3.8.0
   become: true
-  when: not py_path.stat.exists or (py_version is defined and '3.8.0' not in py_version.stdout)
+  when: not py_path.stat.exists or (py_version is defined and '3.8.' not in py_version.stdout)
 - name: Install Python 3.8.0 to /usr/local/bin
   command: make install
   args:
     chdir: /opt/python-build-dir/Python-3.8.0
   become: true
-  when: not py_path.stat.exists or (py_version is defined and '3.8.0' not in py_version.stdout)
+  when: not py_path.stat.exists or (py_version is defined and '3.8.' not in py_version.stdout)
 
 - name: Cleanup temp build directory
   file:

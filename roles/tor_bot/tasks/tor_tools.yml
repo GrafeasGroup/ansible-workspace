@@ -37,6 +37,7 @@
       SLACK_API_KEY={{ slack_key | quote }}
     create: true
     marker: '# {mark} TOR BOT INFO'
+    mode: '0600'
   become: true
   notify:
     - restart shadowban checker
@@ -45,6 +46,7 @@
   template:
     src: systemd-service-other.j2
     dest: /etc/systemd/system/tor_tools.service
+    mode: '0644'
   become: true
   vars:
     venv: tor_tools
