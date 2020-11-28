@@ -12,9 +12,21 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
+
+    # This is our workaround for git submodules that are private
+    - run: |
+        printf '::set-output name=path::%s\n' "$(git config submodule.ansible-secrets.path)"
+        printf '::set-output name=repository::%s\n' "$(git config submodule.ansible-secrets.url)"
+        printf '::set-output name=commit::%s\n' "$(git ls-tree HEAD | awk '$2 ~ /commit/ && $4 ~ /inventory/ { print $3 }')"
+        rm -rf ./inventory
+      id: inventory
+    - uses: actions/checkout@v1
       with:
+        ref: ${{ steps.inventory.outputs.commit }}
+        repository: ${{ steps.inventory.outputs.repository }}
+        path: ${{ steps.inventory.outputs.path }}
         ssh-key: ${{ secrets.SSH_KEY_ANSIBLE_INVENTORY }}
-        submodule: 'recursive'
+
     - uses: actions/setup-python@v1
       with:
         python-version: '3.x'
