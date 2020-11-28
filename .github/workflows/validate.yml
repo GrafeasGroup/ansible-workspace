@@ -11,12 +11,9 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
-    - run: rm -rf ./inventory
-    - uses: actions/checkout@v1
       with:
-        repository: 'git@github.com:GrafeasGroup/ansible-secrets.git'
-        ssh-key: ${{ secrets.GITHUB_SSH_KEY_ANSIBLE_INVENTORY }}
-        path: 'inventory'
+        ssh-key: ${{ secrets.SSH_KEY_ANSIBLE_INVENTORY }}
+        submodule: 'recursive'
     - uses: actions/setup-python@v1
       with:
         python-version: '3.x'
@@ -44,12 +41,9 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
-    - run: rm -rf ./inventory
-    - uses: actions/checkout@v1
       with:
-        repository: 'git@github.com:GrafeasGroup/ansible-secrets.git'
-        ssh-key: ${{ secrets.GITHUB_SSH_KEY_ANSIBLE_INVENTORY }}
-        path: 'inventory'
+        ssh-key: ${{ secrets.SSH_KEY_ANSIBLE_INVENTORY }}
+        submodule: 'recursive'
     - uses: actions/setup-python@v1
       with:
         python-version: '3.x'
@@ -61,14 +55,15 @@ jobs:
         source ./venv/bin/activate
         hash -r
 
-        printf '%s\n' "${{ secrets.SSH_KEY_REMOTE_USER }}" > ./private_key
+        printf '%s\n' "$SSH_KEY" > ./private_key
         chmod 600 ./private_key
 
         python3 -m pip install -r requirements.txt
         hash -r
 
-        ansible-galaxy collection install -r ./requirements.yml
-        ansible-galaxy role install -r ./requirements.yml
+        ansible-galaxy install -r ./requirements.yml
+      env:
+        SSH_KEY: ${{ secrets.SSH_KEY_REMOTE_USER }}
 
     - name: Ansible Inventory
       id: inventory
