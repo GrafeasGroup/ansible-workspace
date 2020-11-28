@@ -1,0 +1,82 @@
+name: Validate
+
+on:
+  pull_request:
+    branches:
+      - 'master'
+
+jobs:
+  lint:
+    runs-on: ubuntu-20.04
+    
+    steps:
+    - uses: actions/checkout@v1
+    - run: rm -rf ./inventory
+    - uses: actions/checkout@v1
+      with:
+        repository: 'git@github.com:GrafeasGroup/ansible-secrets.git'
+        ssh-key: ${{ secrets.GITHUB_SSH_KEY_ANSIBLE_INVENTORY }}
+        path: 'inventory'
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+        architecture: 'x64'
+    - name: Setup Ansible
+      run: |
+        python3 -m pip install --upgrade pip
+        python3 -m venv venv
+        source ./venv/bin/activate
+        hash -r
+
+        python3 -m pip install --upgrade setuptools
+        python3 -m pip install -r dev-requirements.txt
+
+    - name: Ansible Lint
+      id: lint
+      run: |
+        source ./venv/bin/activate
+        hash -r
+
+        ansible-lint $(find . -maxdepth 1 -mindepth 1 \( -name '*.yml' -or -name '*.yaml' \) -print)
+
+  inventory:
+    runs-on: ubuntu-20.04
+    
+    steps:
+    - uses: actions/checkout@v1
+    - run: rm -rf ./inventory
+    - uses: actions/checkout@v1
+      with:
+        repository: 'git@github.com:GrafeasGroup/ansible-secrets.git'
+        ssh-key: ${{ secrets.GITHUB_SSH_KEY_ANSIBLE_INVENTORY }}
+        path: 'inventory'
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+        architecture: 'x64'
+    - name: Setup Ansible
+      run: |
+        python3 -m pip install --upgrade pip
+        python3 -m venv venv
+        source ./venv/bin/activate
+        hash -r
+
+        printf '%s\n' "${{ secrets.SSH_KEY_REMOTE_USER }}" > ./private_key
+        chmod 600 ./private_key
+
+        python3 -m pip install -r requirements.txt
+        hash -r
+
+        ansible-galaxy collection install -r ./requirements.yml
+        ansible-galaxy role install -r ./requirements.yml
+
+    - name: Ansible Inventory
+      id: inventory
+      run: |
+        source ./venv/bin/activate
+        hash -r
+
+        ansible -m ping all
+      env:
+        ANSIBLE_PRIVATE_KEY_FILE: './private_key'
+        ANSIBLE_REMOTE_USER: ${{ secrets.REMOTE_USER }}
