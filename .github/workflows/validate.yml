@@ -1,0 +1,101 @@
+name: Ansible Static Analysis
+
+on:
+  pull_request:
+    branches:
+      - 'master'
+
+jobs:
+  lint:
+    runs-on: ubuntu-20.04
+    
+    steps:
+    - uses: actions/checkout@v1
+
+    # This is our workaround for git submodules that are private
+    - run: |
+        printf '::set-output name=path::%s\n' "$(git config submodule.ansible-secrets.path)"
+        printf '::set-output name=repository::%s\n' "$(git config submodule.ansible-secrets.url)"
+        printf '::set-output name=commit::%s\n' "$(git ls-tree HEAD | awk '$2 ~ /commit/ && $4 ~ /inventory/ { print $3 }')"
+        rm -rf ./inventory
+      id: inventory
+    - uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.inventory.outputs.commit }}
+        repository: ${{ steps.inventory.outputs.repository }}
+        path: ${{ steps.inventory.outputs.path }}
+        ssh-key: ${{ secrets.SSH_KEY_ANSIBLE_INVENTORY }}
+
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+        architecture: 'x64'
+    - name: Setup Ansible
+      run: |
+        python3 -m pip install --upgrade pip
+        python3 -m venv venv
+        source ./venv/bin/activate
+        hash -r
+
+        python3 -m pip install --upgrade setuptools
+        python3 -m pip install -r dev-requirements.txt
+
+    - name: Ansible Lint
+      id: lint
+      run: |
+        source ./venv/bin/activate
+        hash -r
+
+        ansible-lint $(find . -maxdepth 1 -mindepth 1 \( -name '*.yml' -or -name '*.yaml' \) -print)
+
+  inventory:
+    runs-on: ubuntu-20.04
+    
+    steps:
+    - uses: actions/checkout@v1
+
+    # This is our workaround for git submodules that are private
+    - run: |
+        printf '::set-output name=path::%s\n' "$(git config submodule.ansible-secrets.path)"
+        printf '::set-output name=repository::%s\n' "$(git config submodule.ansible-secrets.url)"
+        printf '::set-output name=commit::%s\n' "$(git ls-tree HEAD | awk '$2 ~ /commit/ && $4 ~ /inventory/ { print $3 }')"
+        rm -rf ./inventory
+      id: inventory
+    - uses: actions/checkout@v1
+      with:
+        ref: ${{ steps.inventory.outputs.commit }}
+        repository: ${{ steps.inventory.outputs.repository }}
+        path: ${{ steps.inventory.outputs.path }}
+        ssh-key: ${{ secrets.SSH_KEY_ANSIBLE_INVENTORY }}
+
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+        architecture: 'x64'
+    - name: Setup Ansible
+      run: |
+        python3 -m pip install --upgrade pip
+        python3 -m venv venv
+        source ./venv/bin/activate
+        hash -r
+
+        printf '%s\n' "$SSH_KEY" > ./private_key
+        chmod 600 ./private_key
+
+        python3 -m pip install -r requirements.txt
+        hash -r
+
+        ansible-galaxy install -r ./requirements.yml
+      env:
+        SSH_KEY: ${{ secrets.SSH_KEY_REMOTE_USER }}
+
+    - name: Ansible Inventory
+      id: inventory
+      run: |
+        source ./venv/bin/activate
+        hash -r
+
+        ansible -m ping all
+      env:
+        ANSIBLE_PRIVATE_KEY_FILE: './private_key'
+        ANSIBLE_REMOTE_USER: ${{ secrets.REMOTE_USER }}

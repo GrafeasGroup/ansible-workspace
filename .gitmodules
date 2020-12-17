@@ -1,4 +1,0 @@
-[submodule "ansible-secrets"]
-	path = inventory
-	url = https://github.com/GrafeasGroup/ansible-secrets.git
-	branch = master

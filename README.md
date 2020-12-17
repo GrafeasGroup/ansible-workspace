@@ -2,36 +2,51 @@
 
 This serves as a monolithic repository for the Grafeas Group Ansible configuration scripts.
 
+## Requirements
+
+- Python 3.8.3 or higher
+
 ## Setup
 
-Once fully cloned down (see [Submodules](#submodules) below), ensure you have Python 3.8.0 (or later) installed locally. Then there are a few more setup steps before we get started:
+1. Create a virtualenv with `python3 -m venv ./venv` and activate it (i.e. `source ./venv/bin/activate`)
+2. Install `pip-tools` (`pip install pip-tools`)
+3. Sync up python dependencies with `pip-sync ./dependencies/requirements.txt` (or if running molecule, use `./dependencies/dev-requirements.txt` instead)
 
-- Setup and activate a virtualenv with `venv`
-- Upgrade `pip`
-- Install `pip-tools`
-- Sync up the installed packages in the virtualenv with the ones declared in `requirements.txt`
-
-Executing the above steps from the shell would look like this:
+Executing these steps from the shell would look like this:
 
 ```shell
 ~/src/ansible-workspace $ python3 -m venv ./venv
 ~/src/ansible-workspace $ source ./venv/bin/activate
 (venv) ~/src/ansible-workspace $ pip install --upgrade pip
 (venv) ~/src/ansible-workspace $ pip install pip-tools
-(venv) ~/src/ansible-workspace $ pip-sync requirements.txt
+(venv) ~/src/ansible-workspace $ pip-sync ./dependencies/requirements.txt
+(venv) ~/src/ansible-workspace $ hash -r # optional: make your current shell notice the new commands in your PATH
 ```
 
 Now you're ready to go!
 
 ## Usage
 
-By convention, from the Ansible ecosystem, `site.yml` is the default build-the-world playbook. There are a few other playbooks defined in this repository, but any playbook can be invoked like so:
+By convention, from the Ansible ecosystem, `site.yml` is the default build-the-world playbook. In our case, there's some work that's done for us already. See our [packer repository][grafeas-packer] for the scripts we use to build our base VM template, which is where Ansible in this repository picks things up.
 
+While there are other playbooks, any playbook can be invoked like so:
+
+```shell
+(venv) ~/src/ansible-workspace $ export ANSIBLE_REMOTE_USER='my_server_username'
+(venv) ~/src/ansible-workspace $ export ANSIBLE_REMOTE_PORT='9039'  # Some alternate SSH port, if relevant
+(venv) ~/src/ansible-workspace $ ssh-add ~/.ssh/id_rsa
+(venv) ~/src/ansible-workspace $ ansible-playbook ./site.yml --inventory ./inventory --ask-become-pass
 ```
+
+There are a few other playbooks defined in this repository, but any playbook can be invoked like so:
+
+```shell
 (venv) ~/src/ansible-workspace $ export ANSIBLE_REMOTE_USER='my_server_username'
 (venv) ~/src/ansible-workspace $ ssh-add ~/.ssh/id_rsa
 (venv) ~/src/ansible-workspace $ ansible-playbook ./site.yml --inventory ./inventory --ask-become-pass
 ```
+
+[grafeas-packer]: https://github.com/GrafeasGroup/packer-legacy
 
 This makes a few assumptions:
 
@@ -71,7 +86,7 @@ The output of `pip-compile` is a file that retains full backward-compatibility w
 To modify the dependencies, modify the input file(s) (`dev-requirements.in` if it's specific to developing ansible code but not needed at runtime, `requirements.in` otherwise) and run `pip-compile --generate-hashes` on the pairings like so:
 
 ```
-(venv) ~/src/ansible-workspace $ pip-compile --generate-hashes --out-file requirements.in requirements.txt
+(venv) ~/src/ansible-workspace $ pip-compile --generate-hashes --output-file requirements.txt requirements.in
 ```
 
 The resulting changes to the input and output files should be tracked in the repository.

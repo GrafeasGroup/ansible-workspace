@@ -1,6 +1,0 @@
----
-
-- hosts: bot_servers
-  roles:
-    - name: os_base
-    - name: tor_bot
