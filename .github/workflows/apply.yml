@@ -9,41 +9,37 @@ jobs:
   apply:
 
     runs-on: ubuntu-20.04
-    
+
     steps:
-    - uses: actions/checkout@v1
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+          architecture: 'x64'
+      - name: Setup Ansible
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m venv venv
+          source ./venv/bin/activate
+          hash -r
 
-    # This is our workaround for git submodules that are private
-    - run: |
-        printf '::set-output name=path::%s\n' "$(git config submodule.ansible-secrets.path)"
-        printf '::set-output name=repository::%s\n' "$(git config submodule.ansible-secrets.url)"
-        printf '::set-output name=commit::%s\n' "$(git ls-tree HEAD | awk '$2 ~ /commit/ && $4 ~ /inventory/ { print $3 }')"
-        rm -rf ./inventory
-      id: inventory
-    - uses: actions/checkout@v1
-      with:
-        ref: ${{ steps.inventory.outputs.commit }}
-        repository: ${{ steps.inventory.outputs.repository }}
-        path: ${{ steps.inventory.outputs.path }}
-        ssh-key: ${{ secrets.SSH_KEY_ANSIBLE_INVENTORY }}
+          python3 -m pip install -r ./dependencies/requirements.txt
+          hash -r
 
-    - uses: actions/setup-python@v1
-      with:
-        python-version: '3.x'
-        architecture: 'x64'
-    - name: Setup Ansible
-      run: |
-        python3 -m pip install --upgrade pip
-        python3 -m venv venv
-        source ./venv/bin/activate
-        hash -r
+          ansible-galaxy install -r ./dependencies/requirements.yml
 
-        printf '%s\n' "$SSH_KEY" > ./private_key
-        chmod 600 ./private_key
+      - name: Ansible Inventory
+        id: inventory
+        run: |
+          source ./venv/bin/activate
+          hash -r
 
-        python3 -m pip install -r requirements.txt
-        hash -r
+          printf '%s\n' "$SSH_KEY" > "$ANSIBLE_PRIVATE_KEY_FILE"
+          chmod 600 ./private_key
 
-        ansible-galaxy install -r ./requirements.yml
-      env:
-        SSH_KEY: ${{ secrets.SSH_KEY_REMOTE_USER }}
+          ansible -m ping all
+        env:
+          ANSIBLE_PRIVATE_KEY_FILE: './private_key'
+          ANSIBLE_REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          LINODE_ACCESS_TOKEN: ${{ secrets.LINODE_API_KEY }}
+          SSH_KEY: ${{ secrets.SSH_KEY_REMOTE_USER }}
