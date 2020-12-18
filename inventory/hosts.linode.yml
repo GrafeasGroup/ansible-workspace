@@ -1,2 +1,8 @@
 ---
 plugin: linode
+keyed_groups:
+  - key: region
+    prefix: region
+groups:
+  bots: "'bot-servers' in (tags | list)"
+  web: "'web-servers' in (tags | list)"

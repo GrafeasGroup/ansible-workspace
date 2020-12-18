@@ -9,20 +9,22 @@ DOCUMENTATION = r'''
     plugin_type: inventory
     author:
       - Luke Murphy (@decentral1se)
-    short_description: (TLG) Ansible dynamic inventory plugin for Linode.
+    short_description: Ansible dynamic inventory plugin for Linode.
     requirements:
-        - python >= 3.5
-        - linode_api4 >= 2.0.0
+        - python >= 3.6
+        - linode_api4 >= 3.0.0
     description:
         - Reads inventories from the Linode API v4.
         - Uses a YAML configuration file that ends with linode.(yml|yaml).
         - Linode labels are used by default as the hostnames.
-        - The inventory groups are built from tags and not groups.
+        - The inventory groups are built from groups and not tags.
+    extends_documentation_fragment:
+        - constructed
     options:
         plugin:
             description: marks this as an instance of the 'linode' plugin
             required: true
-            choices: ['linode']
+            choices: ['linode', 'community.general.linode']
         access_token:
             description: The Linode account personal access token.
             required: true
@@ -38,32 +40,48 @@ DOCUMENTATION = r'''
           default: []
           type: list
           required: false
-        tags:
-          description: Populate inventory with these tags into groups by the same name.
-          default: []
-          type: list
-          required: false
+        strict:
+          version_added: 2.0.0
+        compose:
+          version_added: 2.0.0
+        groups:
+          version_added: 2.0.0
+        keyed_groups:
+          version_added: 2.0.0
 '''
 
 EXAMPLES = r'''
 # Minimal example. `LINODE_ACCESS_TOKEN` is exposed in environment.
-plugin: linode
-# Example with regions, types, tags, and access token
-plugin: linode
+plugin: community.general.linode
+
+# Example with regions, types, groups and access token
+plugin: community.general.linode
 access_token: foobar
 regions:
   - eu-west
 types:
   - g5-standard-2
-tags:
-  - web-servers
+
+# Example with keyed_groups, groups, and compose
+plugin: community.general.linode
+access_token: foobar
+keyed_groups:
+  - key: tags
+    separator: ''
+  - key: region
+    prefix: region
+groups:
+  webservers: "'web' in (tags|list)"
+  mailservers: "'mail' in (tags|list)"
+compose:
+  ansible_port: 2222
 '''
 
 import os
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six import string_types
-from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 
 
 try:
@@ -74,10 +92,9 @@ except ImportError:
     HAS_LINODE = False
 
 
-class InventoryModule(BaseInventoryPlugin):
+class InventoryModule(BaseInventoryPlugin, Constructable):
 
-    # NAME = 'community.general.linode'
-    NAME = 'linode'
+    NAME = 'community.general.linode'
 
     def _build_client(self):
         """Build the Linode client."""
@@ -106,16 +123,19 @@ class InventoryModule(BaseInventoryPlugin):
             raise AnsibleError('Linode client raised: %s' % exception)
 
     def _add_groups(self):
-        """Add Linode instance tags to the dynamic inventory as groups."""
-        self.linode_tags = set()
-        for instance in self.instances:
-            for tag in instance.tags:
-                self.linode_tags.add(tag)
+        """Add Linode instance groups to the dynamic inventory."""
+        self.linode_groups = set(
+            filter(None, [
+                instance.group
+                for instance
+                in self.instances
+            ])
+        )
 
-        for linode_tag in self.linode_tags:
-            self.inventory.add_group(linode_tag)
+        for linode_group in self.linode_groups:
+            self.inventory.add_group(linode_group)
 
-    def _filter_by_config(self, regions, types, tags, *args, **kwargs):
+    def _filter_by_config(self, regions, types):
         """Filter instances by user specified configuration."""
         if regions:
             self.instances = [
@@ -129,19 +149,10 @@ class InventoryModule(BaseInventoryPlugin):
                 if instance.type.id in types
             ]
 
-        if tags:
-            self.instances = [
-                instance for instance in self.instances
-                if any(tag in tags for tag in instance.tags)
-            ]
-
     def _add_instances_to_groups(self):
         """Add instance names to their dynamic inventory groups."""
         for instance in self.instances:
-            for tag in instance.tags:
-                self.inventory.add_host(instance.label, group=tag)
-            else:
-                self.inventory.add_host(instance.label)
+            self.inventory.add_host(instance.label, group=instance.group)
 
     def _add_hostvars_for_instances(self):
         """Add hostvars for instances in the dynamic inventory."""
@@ -182,10 +193,6 @@ class InventoryModule(BaseInventoryPlugin):
                 'type_to_be': list,
                 'value': config_data.get('types', [])
             },
-            'tags': {
-                'type_to_be': list,
-                'value': config_data.get('tags', [])
-            },
         }
 
         for name in options:
@@ -197,9 +204,8 @@ class InventoryModule(BaseInventoryPlugin):
 
         regions = options['regions']['value']
         types = options['types']['value']
-        tags = options['tags']['value']
 
-        return regions, types, tags
+        return regions, types
 
     def verify_file(self, path):
         """Verify the Linode configuration file."""
@@ -221,9 +227,27 @@ class InventoryModule(BaseInventoryPlugin):
 
         self._get_instances_inventory()
 
-        regions, types, tags = self._get_query_options(config_data)
-        self._filter_by_config(regions, types, tags)
+        strict = self.get_option('strict')
+        regions, types = self._get_query_options(config_data)
+        self._filter_by_config(regions, types)
 
         self._add_groups()
         self._add_instances_to_groups()
         self._add_hostvars_for_instances()
+        for instance in self.instances:
+            variables = self.inventory.get_host(instance.label).get_vars()
+            self._add_host_to_composed_groups(
+                self.get_option('groups'),
+                variables,
+                instance.label,
+                strict=strict)
+            self._add_host_to_keyed_groups(
+                self.get_option('keyed_groups'),
+                variables,
+                instance.label,
+                strict=strict)
+            self._set_composite_vars(
+                self.get_option('compose'),
+                variables,
+                instance.label,
+                strict=strict)
