@@ -40,6 +40,6 @@ jobs:
           ansible -m ping all
         env:
           ANSIBLE_PRIVATE_KEY_FILE: './private_key'
-          ANSIBLE_REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          ANSIBLE_REMOTE_USER: ${{ secrets.GRAFEAS_REMOTE_USER }}
           LINODE_ACCESS_TOKEN: ${{ secrets.LINODE_API_KEY }}
-          SSH_KEY: ${{ secrets.SSH_KEY_REMOTE_USER }}
+          SSH_KEY: ${{ secrets.GRAFEAS_SSH_PRIVATE_KEY }}
