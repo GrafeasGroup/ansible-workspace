@@ -64,6 +64,7 @@ jobs:
 
           ansible -m ping all
         env:
+          ANSIBLE_HOST_KEY_CHECKING: 'False'
           ANSIBLE_PRIVATE_KEY_FILE: './private_key'
           ANSIBLE_REMOTE_USER: ${{ secrets.GRAFEAS_REMOTE_USER }}
           LINODE_ACCESS_TOKEN: ${{ secrets.LINODE_API_KEY }}
