@@ -1,3 +1,4 @@
 -c requirements.txt
 -r requirements.in
 molecule[lint]
+molecule_vagrant
