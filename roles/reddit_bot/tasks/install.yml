@@ -2,22 +2,50 @@
 - service_facts:  # noqa 502
 
 - name: Get latest packaged release
-  community.general.github_release:
-    user: GrafeasGroup
-    repo: '{{ bot_repo | mandatory }}'
-    action: latest_release
-    token: '{{ github_token | default(omit) }}'
+  uri:
+    url: 'https://api.github.com/repos/GrafeasGroup/{{ bot_repo | mandatory }}/releases/latest'
+    method: GET
+    headers: {}
   register: github
+  when: bot_version is not defined
+
+- name: Get specific packaged release
+  uri:
+    url: 'https://api.github.com/repos/GrafeasGroup/{{ bot_repo | mandatory }}/releases/tags/v{{ bot_version }}'
+    method: GET
+    headers: {}
+  register: github
+  when: bot_version is defined
+
+- name: Set bot version
+  set_fact:
+    bot_version: '{{ github.json.tag_name | regex_replace("^v(.+)$", "\1") }}'
+  when:
+    - github is defined
+    - github.json is defined
+    - github.json.tag_name is defined
+
+- name: Set bot wheel url
+  set_fact:
+    bot_wheel_url: '{{ github.json | community.general.json_query("assets[?ends_with(name,`.whl`)].browser_download_url") }}'
+  when:
+    - github is defined
+    - github.json is defined
+    - github.json.tag_name is defined
+
+- debug: var=bot_version
+- debug: var=bot_wheel_url
+- debug: var=github
 
 - name: Download wheel package
   get_url:
-    url: ''
-    dest: /tmp/
+    # url: 'https://github.com/GrafeasGroup/{{ bot_repo }}/releases/download/v{{ bot_version }}/{{ bot_repo }}-{{ bot_version }}-py3-none-any.whl'
+    url: '{{ bot_wheel_url }}'
+    dest: '/tmp/{{ bot_repo }}-{{ bot_version }}-py3-none-any.whl'
     owner: '{{ bot_name }}'
     group: '{{ bot_name }}'
+    mode: '644'
   register: whl
-  # notify:
-  #   - compile requirements.txt
   become: true
   become_user: '{{ bot_name }}'
 
@@ -93,7 +121,6 @@
     mode: '600'
   become: true
 
-
 - name: Service unit (systemd)
   template:
     dest: '/etc/systemd/system/{{ bot_name }}.service'
@@ -101,6 +128,7 @@
     owner: root
     group: root
     mode: '644'
+    validate: 'systemd-analyze verify %s'
   notify: smart restart service
   become: true
 
