@@ -1,6 +1,5 @@
 ---
-
-- hosts: bot_servers
+- hosts: bots
   tasks:
     - import_role:
         name: 'tor_bot'
@@ -11,6 +10,3 @@
     - import_role:
         name: 'tor_bot'
         tasks_from: 'tor_ocr.yml'
-    - import_role:
-        name: 'tor_bot'
-        tasks_from: 'tor_tools.yml'
