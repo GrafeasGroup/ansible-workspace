@@ -47,7 +47,6 @@
     mode: '644'
   register: whl
   become: true
-  become_user: '{{ bot_name }}'
 
 - name: Read name from wheel metadata
   shell:
@@ -81,7 +80,6 @@
   notify:
     - compile requirements.txt
   become: true
-  become_user: '{{ bot_user }}'
 
 - meta: flush_handlers
 
@@ -98,8 +96,8 @@
       source {{ venv_path | quote }}/bin/activate &>/dev/null
 
       yes | pip-sync --ask --quiet {{ venv_path | quote }}/requirements.txt
+      chown {{ bot_name }} -R {{ venv_path | quote }} &>/dev/null
   become: true
-  become_user: '{{ bot_user }}'
   register: whl_install
   changed_when: whl_install.stdout
 

@@ -24,8 +24,9 @@
 
       pip install --upgrade pip
       pip install pip-tools
+
+      chown {{ bot_name }} -R {{ venv_path | quote }}
     creates: '{{ venv_path }}'
   become: true
-  become_user: '{{ bot_name }}'
 
 # vim: ft=yaml.ansible
