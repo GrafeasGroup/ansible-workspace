@@ -297,6 +297,9 @@ python-dateutil==2.8.1 \
 python-slugify==4.0.1 \
     --hash=sha256:69a517766e00c1268e5bbfc0d010a0a8508de0b18d30ad5a1ff357f8ae724270 \
     # via cookiecutter
+python-vagrant==0.5.15 \
+    --hash=sha256:af9a8a9802d382d45dbea96aa3cfbe77c6e6ad65b3fe7b7c799d41ab988179c6 \
+    # via -r dependencies/dev-requirements.in
 pyyaml==5.3.1 \
     --hash=sha256:06a0d7ba600ce0b2d2fe2e78453a470b5a6e000a985dd4a4e54e436cc36b0e97 \
     --hash=sha256:240097ff019d7c70a4922b6869d8a86407758333f02203e0fc6ff79c5dcede76 \

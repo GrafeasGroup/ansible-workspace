@@ -9,6 +9,7 @@ driver:
 platforms:
   - name: instance
     box: grafeas/legacy
+    box_version: 0.2.3
     memory: 512
     cpus: 1
     interfaces:
@@ -17,13 +18,19 @@ platforms:
         guest: 8022  # This is the non-default ssh port in the vagrant box
         host_ip: '127.0.0.1'
         host: 9999
+    config_options:
+      ssh.guest_port: 8022
 provisioner:
   name: ansible
   inventory:
     links:
       group_vars: ../../tests/group_vars
+  env:
+    ANSIBLE_REMOTE_PORT: 9999
 verifier:
   name: ansible
+  env:
+    ANSIBLE_REMOTE_PORT: 9999
 lint: |
   set -e
   yamllint .
