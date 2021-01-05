@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include reddit_bot"
+      include_role:
+        name: "reddit_bot"

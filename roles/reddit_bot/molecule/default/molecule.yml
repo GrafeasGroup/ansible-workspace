@@ -1,0 +1,31 @@
+---
+dependency:
+  name: shell
+  command: ansible-galaxy install -r ./requirements.yml
+driver:
+  name: vagrant
+  provider:
+    name: virtualbox
+platforms:
+  - name: instance
+    box: grafeas/legacy
+    memory: 512
+    cpus: 1
+    interfaces:
+      - network_name: forwarded_port
+        id: ssh  # This _must_ be named exactly 'ssh'
+        guest: 8022  # This is the non-default ssh port in the vagrant box
+        host_ip: '127.0.0.1'
+        host: 9999
+provisioner:
+  name: ansible
+  inventory:
+    links:
+      group_vars: ../../tests/group_vars
+verifier:
+  name: ansible
+lint: |
+  set -e
+  yamllint .
+  ansible-lint
+  flake8
