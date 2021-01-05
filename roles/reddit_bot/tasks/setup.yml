@@ -12,7 +12,6 @@
     group: bots
     home: '{{ user_home }}'
     create_home: true
-    append: true
   become: true
 
 - name: Create venv
@@ -25,7 +24,7 @@
       pip install --upgrade pip
       pip install pip-tools
 
-      chown {{ bot_name }} -R {{ venv_path | quote }}
+      chown {{ bot_name }}:bots -R {{ venv_path | quote }}
     creates: '{{ venv_path }}'
   become: true
 

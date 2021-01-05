@@ -19,5 +19,5 @@
       source {{ venv_path | quote }}/bin/activate
 
       pip-compile --generate-hashes --output-file {{ venv_path | quote }}/requirements.txt {{ venv_path | quote }}/requirements.in
+      chown {{ bot_name }}:bots -R {{ venv_path | quote }}
   become: true
-  become_user: '{{ bot_name }}'
