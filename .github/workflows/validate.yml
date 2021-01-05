@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - uses: actions/setup-python@v1
         with:
           python-version: '3.x'
@@ -36,7 +36,13 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+        with:
+          repository: GrafeasGroup/ansible-secrets
+          token: ${{ secrets.GRAFEAS_GH_PAT }}
+          path: secrets
+      - run: rsync -av ./secrets/ ./inventory/
       - uses: actions/setup-python@v1
         with:
           python-version: '3.x'
