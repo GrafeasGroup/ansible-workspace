@@ -1,2 +1,6 @@
 ---
-# tasks file for reddit_bot
+
+- import_tasks: setup.yml
+- import_tasks: install.yml
+
+# vim: ft=yaml.ansible

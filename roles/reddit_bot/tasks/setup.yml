@@ -1,0 +1,31 @@
+---
+
+- name: Bot group
+  group:
+    name: bots
+    system: true
+  become: true
+
+- name: Bot user
+  user:
+    name: '{{ bot_name | mandatory }}'
+    group: bots
+    home: '{{ user_home }}'
+    create_home: true
+    append: true
+  become: true
+
+- name: Create venv
+  shell:
+    cmd: |
+      /usr/local/bin/python3 -m venv {{ venv_path | quote }}
+      source {{ venv_path | quote }}/bin/activate
+      hash -r
+
+      pip install --upgrade pip
+      pip install pip-tools
+    creates: '{{ venv_path }}'
+  become: true
+  become_user: '{{ bot_name }}'
+
+# vim: ft=yaml.ansible

@@ -1,0 +1,23 @@
+[Unit]
+Description={{ bot_description | default('') }}
+Documentation=https://github.com/GrafeasGroup/{{ bot_repo }}
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/sysconfig/{{ bot_name }}
+ExecStart={{ venv_path }}/bin/{{ bot_cmd | mandatory }}
+User={{ bot_name }}
+Group=bots
+KillSignal=SIGINT
+Restart=on-failure
+TimeoutStopSec=90
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier={{ bot_name }}
+
+[Install]
+WantedBy=multi-user.target
+{#
+  vim: ft=systemd.jinja2
+#}
