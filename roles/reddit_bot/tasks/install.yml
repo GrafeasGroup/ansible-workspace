@@ -99,11 +99,12 @@
 
       yes | pip-sync --ask --quiet {{ venv_path | quote }}/requirements.txt
       chown {{ bot_name }}:bots -R {{ venv_path | quote }} &>/dev/null
+    executable: /bin/bash
   become: true
   register: whl_install
   changed_when: whl_install.stdout
 
-- name: 'Directory for app-specific env vars'
+- name: Directory for app-specific env vars
   file:
     path: /etc/sysconfig
     state: directory

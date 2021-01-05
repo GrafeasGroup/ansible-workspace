@@ -20,4 +20,5 @@
 
       pip-compile --generate-hashes --output-file {{ venv_path | quote }}/requirements.txt {{ venv_path | quote }}/requirements.in
       chown {{ bot_name }}:bots -R {{ venv_path | quote }}
+    executable: /bin/bash
   become: true
