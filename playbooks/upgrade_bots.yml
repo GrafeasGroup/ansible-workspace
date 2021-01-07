@@ -2,11 +2,25 @@
 - hosts: bots
   tasks:
     - import_role:
-        name: 'tor_bot'
-        tasks_from: 'tor_moderator.yml'
+        name: 'reddit_bot'
+      vars:
+        bot_name: tor-moderator
+        bot_repo: tor
+        bot_cmd: tor-moderator
+        bot: '{{ reddit_info.tor_moderator | default(omit) }}'
     - import_role:
-        name: 'tor_bot'
-        tasks_from: 'tor_archivist.yml'
+        name: 'reddit_bot'
+      vars:
+        bot_name: tor-archivist
+        bot_repo: tor_archivist
+        bot_cmd: tor-archivist
+        bot: '{{ reddit_info.tor_archivist | default(omit) }}'
     - import_role:
-        name: 'tor_bot'
-        tasks_from: 'tor_ocr.yml'
+        name: 'reddit_bot'
+      vars:
+        bot_name: tor-ocr
+        bot_repo: tor_ocr
+        bot_cmd: tor-apprentice
+        bot: '{{ reddit_info.tor_ocr | default(omit) }}'
+
+# vim: ft=yaml.ansible
