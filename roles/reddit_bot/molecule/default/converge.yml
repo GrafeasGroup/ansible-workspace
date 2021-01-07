@@ -5,7 +5,3 @@
     - name: "Include reddit_bot"
       include_role:
         name: "reddit_bot"
-  vars:
-    bot_name: 'tor-moderator'
-    bot_repo: 'tor'
-    bot_cmd: 'tor-moderator'

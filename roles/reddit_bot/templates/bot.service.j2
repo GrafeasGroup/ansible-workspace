@@ -9,6 +9,7 @@ EnvironmentFile=/etc/sysconfig/{{ bot_name }}
 ExecStart={{ venv_path }}/bin/{{ bot_cmd | mandatory }}
 User={{ bot_name }}
 Group=bots
+WorkingDirectory=/home/{{ bot_name }}
 KillSignal=SIGINT
 Restart=on-failure
 TimeoutStopSec=90

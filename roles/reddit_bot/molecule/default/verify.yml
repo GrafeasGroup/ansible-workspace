@@ -3,3 +3,7 @@
   hosts: all
   tasks:
   - import_tasks: ../../tests/tasks/main.yml
+  vars:
+    bot_name: tor-moderator
+    bot_repo: tor
+    bot_cmd: tor-moderator

@@ -1,0 +1,9 @@
+---
+bot_name: tor-moderator
+bot_repo: tor
+bot_cmd: tor-moderator
+bot:
+  username: ''
+  password: ''
+  client_id: ''
+  client_secret: ''

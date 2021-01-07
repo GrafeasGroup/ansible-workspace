@@ -2,6 +2,7 @@
 python_bin: /usr/local/bin/python3
 user_home: '/home/{{ bot_name | mandatory }}'
 venv_path: '{{ user_home }}/venv'
+env: {}
 # bot_repo: ''
 # bot_name: ''
 # bot_cmd: ''
