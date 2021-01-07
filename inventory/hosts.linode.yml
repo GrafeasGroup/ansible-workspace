@@ -6,6 +6,7 @@ keyed_groups:
 groups:
   bots: "'bot-servers' in (tags | list) and 'gen-1' not in (tags | list)"
   web: "'web-servers' in (tags | list) and 'gen-1' not in (tags | list)"
-  gen_1: "'gen-1' in (tags | list)"
+  old_bots: "'bot-servers' in (tags | list) and 'gen-1' in (tags | list)"
+  old_web: "'web-servers' in (tags | list) and 'gen-1' in (tags | list)"
 compose:
   ansible_host: "ipv4[0]"
