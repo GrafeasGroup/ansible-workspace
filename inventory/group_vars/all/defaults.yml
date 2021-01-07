@@ -1,0 +1,6 @@
+---
+reddit_info: {}
+bugsnag_key: ''
+ocr_space_key: ''
+slack_key: ''
+redis_uri: 'redis://localhost:6379/0'
