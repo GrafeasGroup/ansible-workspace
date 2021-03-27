@@ -69,9 +69,7 @@ jobs:
           source ./venv/bin/activate
           hash -r
 
-          find . -type d \( -path ./venv -o -path ./.direnv \) -prune -false \
-              -a -type f \( -name molecule.yml \) -false \
-              -a -type f \( -name '*.yml' -or -name '*.yaml' \) -print | xargs ansible-lint
+          ansible-lint
         env:
           LINODE_ACCESS_TOKEN: ${{ secrets.LINODE_API_KEY }}
 
