@@ -1,0 +1,199 @@
+---
+name: Ansible
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lint:
+    name: Validate
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: Checkout secrets
+        uses: actions/checkout@v2
+        with:
+          repository: GrafeasGroup/ansible-secrets
+          token: ${{ secrets.GRAFEAS_GH_PAT }}
+          path: secrets
+      - name: ''
+        run: rsync -av ./secrets/ ./inventory/
+      - name: Setup Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+          architecture: 'x64'
+      - name: Caching
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/dev-requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Setup venv
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m venv ./venv
+          source ./venv/bin/activate
+          hash -r
+
+          python3 -m pip install pip-tools
+
+      - name: Setup Ansible
+        run: |
+          source ./venv/bin/activate
+          hash -r
+
+          pip-sync ./dependencies/dev-requirements.txt
+          hash -r
+          ansible-galaxy install -r ./dependencies/requirements.yml
+
+      - name: Ansible Lint
+        run: |
+          source ./venv/bin/activate
+          hash -r
+
+          find . -type d \( -path ./venv -o -path ./.direnv \) -prune -false -o -type f \( -name '*.yml' -or -name '*.yaml' \) -print | xargs ansible-lint
+
+  inventory:
+    name: Validate
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: Checkout secrets
+        uses: actions/checkout@v2
+        with:
+          repository: GrafeasGroup/ansible-secrets
+          token: ${{ secrets.GRAFEAS_GH_PAT }}
+          path: secrets
+      - name: ''
+        run: rsync -av ./secrets/ ./inventory/
+      - name: Setup Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+          architecture: 'x64'
+      - name: Caching
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/dev-requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Setup venv
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m venv ./venv
+          source ./venv/bin/activate
+          hash -r
+
+          python3 -m pip install pip-tools
+
+      - name: Setup Ansible
+        run: |
+          source ./venv/bin/activate
+          hash -r
+
+          pip-sync ./dependencies/requirements.txt
+          hash -r
+          ansible-galaxy install -r ./dependencies/requirements.yml
+
+      - name: Ansible Inventory
+        run: |
+          source ./venv/bin/activate
+          hash -r
+
+          printf '%s\n' "$SSH_KEY" > "$ANSIBLE_PRIVATE_KEY_FILE"
+          chmod 600 ./private_key
+
+          ansible -m ping all
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: 'False'
+          ANSIBLE_PRIVATE_KEY_FILE: './private_key'
+          ANSIBLE_REMOTE_PORT: ${{ secrets.GRAFEAS_SSH_PORT }}
+          ANSIBLE_REMOTE_USER: ${{ secrets.GRAFEAS_REMOTE_USER }}
+          LINODE_ACCESS_TOKEN: ${{ secrets.LINODE_API_KEY }}
+          SSH_KEY: ${{ secrets.GRAFEAS_SSH_PRIVATE_KEY }}
+
+  apply:
+    name: Apply Playbook
+    # if: ${{ github.ref != 'refs/heads/main' }}
+    if: ${{ 'false' }}
+    needs:
+      - lint
+      - inventory
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+        with:
+          repository: GrafeasGroup/ansible-secrets
+          token: ${{ secrets.GRAFEAS_GH_PAT }}
+          path: secrets
+      - run: rsync -av ./secrets/ ./inventory/
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+          architecture: 'x64'
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Setup venv
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m venv ./venv
+          source ./venv/bin/activate
+          hash -r
+
+          python3 -m pip install pip-tools
+
+      - name: Setup Ansible
+        run: |
+          source ./venv/bin/activate
+          hash -r
+
+          pip-sync ./dependencies/requirements.txt
+          hash -r
+          ansible-galaxy install -r ./dependencies/requirements.yml
+
+      - name: Ansible Inventory
+        id: inventory
+        run: |
+          source ./venv/bin/activate
+          hash -r
+
+          printf '%s\n' "$SSH_KEY" > "$ANSIBLE_PRIVATE_KEY_FILE"
+          chmod 600 ./private_key
+
+          ansible -m ping all
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: 'False'
+          ANSIBLE_PRIVATE_KEY_FILE: './private_key'
+          ANSIBLE_REMOTE_PORT: ${{ secrets.GRAFEAS_SSH_PORT }}
+          ANSIBLE_REMOTE_USER: ${{ secrets.GRAFEAS_REMOTE_USER }}
+          LINODE_ACCESS_TOKEN: ${{ secrets.LINODE_API_KEY }}
+          SSH_KEY: ${{ secrets.GRAFEAS_SSH_PRIVATE_KEY }}

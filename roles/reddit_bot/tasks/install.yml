@@ -1,0 +1,136 @@
+---
+- service_facts:  # noqa 502
+
+- name: Get latest packaged release
+  uri:
+    url: 'https://api.github.com/repos/GrafeasGroup/{{ bot_repo | mandatory }}/releases/latest'
+    method: GET
+    headers: {}
+  register: github_latest
+  when: bot_version is not defined
+
+- name: Get specific packaged release
+  uri:
+    url: 'https://api.github.com/repos/GrafeasGroup/{{ bot_repo | mandatory }}/releases/tags/v{{ bot_version }}'
+    method: GET
+    headers: {}
+  register: github_specific
+  when: bot_version is defined
+
+- name: Unify github data
+  set_fact:
+    github: '{{ (github_latest.skipped is defined and github_latest.skipped) | ternary(github_specific, github_latest) }}'
+
+- name: Set bot version
+  set_fact:
+    bot_version: '{{ github.json.tag_name | regex_replace("^v(.+)$", "\1") }}'
+  when:
+    - github is defined
+    - github.json is defined
+    - github.json.tag_name is defined
+
+- name: Set bot wheel url
+  set_fact:
+    bot_wheel_url: '{{ github.json | to_json | from_json | community.general.json_query("assets[?ends_with(name, `.whl`)].browser_download_url") | first }}'
+  when:
+    - github is defined
+    - github.json is defined
+    - github.json.tag_name is defined
+
+- name: Download wheel package
+  get_url:
+    # url: 'https://github.com/GrafeasGroup/{{ bot_repo }}/releases/download/v{{ bot_version }}/{{ bot_repo }}-{{ bot_version }}-py3-none-any.whl'
+    url: '{{ bot_wheel_url }}'
+    dest: '/tmp/{{ bot_repo }}-{{ bot_version }}-py3-none-any.whl'
+    owner: '{{ bot_name }}'
+    group: bots
+    mode: '644'
+  register: whl
+  become: true
+
+- name: Read name from wheel metadata
+  shell:
+    # This unzips the wheel file (it's just a specifically structured ZIP file) and
+    # parses the METADATA file to reformat it into something `pip-compile` can parse
+    cmd: |
+      unzip -a -p {{ whl.dest | quote }} *.dist-info/METADATA | awk '/^Name: / { print $2 }'
+    warn: false
+  # This is a read operation, which doesn't even write to the filesystem
+  changed_when: false
+  register: whl_name
+
+- name: Read requirements from wheel metadata
+  shell:
+    # This unzips the wheel file (it's just a specifically structured ZIP file) and
+    # parses the METADATA file to reformat it into something `pip-compile` can parse
+    cmd: |
+      unzip -a -p {{ whl.dest | quote }} *.dist-info/METADATA | awk '/^Requires-Dist: / { gsub("[)(]","",$3); print $2 $3 }'
+    warn: false
+  # This is a read operation, which doesn't even write to the filesystem
+  changed_when: false
+  register: requirements_in
+
+- name: Write requirements.in
+  copy:
+    content: |
+      {{ requirements_in.stdout }}
+      {{ whl.dest }}
+    dest: '{{ venv_path | quote }}/requirements.in'
+    owner: '{{ bot_name }}'
+    group: bots
+    mode: '644'
+  notify:
+    - compile requirements.txt
+  become: true
+
+- meta: flush_handlers
+
+- name: Conservatively install package and dependencies
+  shell:
+    # The `yes | pip-sync --ask --quiet` gets us to output to stdout
+    # if there's a change, but not if it wouldn't install anything.
+    # This allows us to translate to idempotence checks Ansible looks
+    # for.
+    #
+    # This does not upgrade anything unless it is explicitly required,
+    # and will uninstall if removed as dependencies.
+    cmd: |
+      source {{ venv_path | quote }}/bin/activate &>/dev/null
+
+      yes | pip-sync --ask --quiet {{ venv_path | quote }}/requirements.txt
+      chown {{ bot_name }}:bots -R {{ venv_path | quote }} &>/dev/null
+    executable: /bin/bash
+  become: true
+  register: whl_install
+  changed_when: whl_install.stdout
+
+- name: Directory for app-specific env vars
+  file:
+    path: /etc/sysconfig
+    state: directory
+    owner: root
+    group: root
+    mode: '755'
+  become: true
+
+- name: Service secrets (systemd)
+  template:
+    dest: '/etc/sysconfig/{{ bot_name }}'
+    src: env.sh.j2
+    owner: root
+    group: root
+    mode: '600'
+  become: true
+
+- name: Service unit (systemd)
+  template:
+    dest: '/etc/systemd/system/{{ bot_name }}.service'
+    src: bot.service.j2
+    owner: root
+    group: root
+    mode: '644'
+    # validate: 'systemd-analyze verify %s'
+  notify: smart restart service
+  become: true
+
+# vim: ft=yaml.ansible

@@ -1,3 +1,7 @@
 -c requirements.txt
 -r requirements.in
-molecule[docker,lint]
+molecule[lint]
+
+# Vagrant support
+molecule_vagrant
+python-vagrant

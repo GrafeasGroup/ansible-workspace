@@ -1,0 +1,16 @@
+---
+
+- import_tasks: setup.yml
+- import_tasks: install.yml
+
+- name: Start service
+  systemd:
+    name: '{{ bot_name }}.service'
+    state: started
+    enabled: true
+    daemon_reload: true
+  become: true
+  tags:
+    - notest
+
+# vim: ft=yaml.ansible

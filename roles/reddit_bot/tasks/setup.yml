@@ -1,0 +1,39 @@
+---
+
+- name: System packages
+  apt:
+    name: unzip
+    update_cache: true
+    state: present
+  become: true
+
+- name: Bot group
+  group:
+    name: bots
+    system: true
+  become: true
+
+- name: Bot user
+  user:
+    name: '{{ bot_name | mandatory }}'
+    group: bots
+    home: '{{ user_home }}'
+    create_home: true
+  become: true
+
+- name: Create venv
+  shell:
+    cmd: |
+      /usr/local/bin/python3 -m venv {{ venv_path | quote }}
+      source {{ venv_path | quote }}/bin/activate
+      hash -r
+
+      pip install --upgrade pip
+      pip install pip-tools
+
+      chown {{ bot_name }}:bots -R {{ venv_path | quote }}
+    creates: '{{ venv_path }}'
+    executable: /bin/bash
+  become: true
+
+# vim: ft=yaml.ansible

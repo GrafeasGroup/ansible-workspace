@@ -1,0 +1,23 @@
+---
+
+- stat:  # noqa 502
+    path: '/home/{{ bot_name }}/venv/bin/{{ bot_cmd }}'
+  register: cmd
+
+- name: Assert command exists in venv
+  assert:
+    quiet: true
+    that:
+      - cmd.stat.exists
+      - cmd.stat.executable
+
+- command:
+    cmd: '{{ cmd.stat.path }} --version'
+  register: cmd_version
+  changed_when: false
+
+- name: Assert command operates as expected
+  assert:
+    quiet: true
+    that:
+      - cmd_version.rc == 0

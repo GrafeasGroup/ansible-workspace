@@ -1,0 +1,24 @@
+---
+- name: reload systemd
+  systemd:
+    daemon_reload: true
+  become: true
+
+- name: smart restart service
+  systemd:
+    name: '{{ bot_name }}.service'
+    state: restarted
+  when:
+    - ansible_facts.services[bot_name ~ '.service'] is defined
+    - ansible_facts.services[bot_name ~ '.service'].state == 'running'
+  become: true
+
+- name: compile requirements.txt
+  shell:
+    cmd: |
+      source {{ venv_path | quote }}/bin/activate
+
+      pip-compile --generate-hashes --output-file {{ venv_path | quote }}/requirements.txt {{ venv_path | quote }}/requirements.in
+      chown {{ bot_name }}:bots -R {{ venv_path | quote }}
+    executable: /bin/bash
+  become: true
