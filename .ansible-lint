@@ -1,7 +1,8 @@
 ---
 # vim: ft=yaml
 skip_list:
-  - '403'
+  - package-latest
+  - unnamed-task
 
 exclude_paths:
   - ./collections/ansible_collections/
