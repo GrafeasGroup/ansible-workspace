@@ -1,2 +1,21 @@
+---
+# vim: ft=yaml
 skip_list:
   - '403'
+
+exclude_paths:
+  - ./collections/ansible_collections/
+  - ./.github/
+  - ./.cache/
+  - ./inventory/
+  - '**/molecule.yml'
+
+offline: true
+quiet: true
+
+kinds:
+  - playbook: 'playbooks/*.yml'
+  - galaxy: '**/requirements.yml'
+  - vars: '**/vars/*.{yml,yaml}'
+  - tasks: '**/tasks/*.{yml,yaml}'
+  - meta: '**/meta/main.yml'

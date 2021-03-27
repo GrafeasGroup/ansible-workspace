@@ -5,10 +5,10 @@ name: Ansible
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
     branches:
-      - main
+      - master
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -19,7 +19,7 @@ defaults:
 
 jobs:
   lint:
-    name: Validate
+    name: Lint
 
     runs-on: ubuntu-latest
 
@@ -69,10 +69,14 @@ jobs:
           source ./venv/bin/activate
           hash -r
 
-          find . -type d \( -path ./venv -o -path ./.direnv \) -prune -false -o -type f \( -name '*.yml' -or -name '*.yaml' \) -print | xargs ansible-lint
+          find . -type d \( -path ./venv -o -path ./.direnv \) -prune -false \
+              -a -type f \( -name molecule.yml \) -false \
+              -a -type f \( -name '*.yml' -or -name '*.yaml' \) -print | xargs ansible-lint
+        env:
+          LINODE_ACCESS_TOKEN: ${{ secrets.LINODE_API_KEY }}
 
   inventory:
-    name: Validate
+    name: Inventory
 
     runs-on: ubuntu-latest
 
@@ -85,7 +89,7 @@ jobs:
           repository: GrafeasGroup/ansible-secrets
           token: ${{ secrets.GRAFEAS_GH_PAT }}
           path: secrets
-      - name: ''
+      - name: Relocate secrets to the proper spot
         run: rsync -av ./secrets/ ./inventory/
       - name: Setup Python
         uses: actions/setup-python@v1
