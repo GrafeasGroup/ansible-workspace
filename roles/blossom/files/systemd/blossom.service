@@ -1,0 +1,25 @@
+[Unit]
+Description=Blossom (Django) Web Service
+Requires=blossom.socket
+After=network.target
+
+[Service]
+Type=notify
+# the specific user that our service will run as
+User=someuser
+Group=someuser
+# See http://0pointer.net/blog/dynamic-users-with-systemd.html
+DynamicUser=yes
+StateDirectory=blossom
+LogsDirectory=blossom
+CacheDirectory=blossom
+RuntimeDirectory=blossom
+WorkingDirectory=/home/someuser/applicationroot
+ExecStart=/usr/bin/gunicorn --bind=unix:/var/run/blossom.socket --log-syslog --syslog-prefix=blossom --name=blossom --workers=4 blossom.wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

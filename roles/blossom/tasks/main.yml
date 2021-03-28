@@ -41,5 +41,6 @@
       - certbot-dns-cloudflare
   become: true
 
-- import_tasks: nginx.yml
 - import_tasks: certbot.yml
+- import_tasks: nginx.yml
+- import_tasks: web_service.yml

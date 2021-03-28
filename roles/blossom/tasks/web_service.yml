@@ -1,10 +1,10 @@
 ---
 # vim: ft=yaml.ansible
 
-- name: Configure Blossom systemd socket
+- name: Configure Blossom systemd service
   copy:
-    dest: /etc/systemd/system/blossom.socket
-    src: systemd/blossom.socket
+    dest: /etc/systemd/system/blossom.service
+    src: systemd/blossom.service
     follow: true
     force: true
     owner: root
