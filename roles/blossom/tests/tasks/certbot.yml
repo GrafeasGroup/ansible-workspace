@@ -1,0 +1,28 @@
+---
+- name: stat /usr/bin/certbot
+  stat:
+    path: /usr/bin/certbot
+  register: cmd
+
+- name: Assert certbot command exists
+  assert:
+    quiet: true
+    that:
+      - cmd.stat.exists
+      - cmd.stat.executable
+
+- name: snap list certbot
+  command:
+    cmd: snap list certbot
+  register: snap
+  changed_when: false
+  failed_when:
+    - snap.rc == 127
+
+- name: Assert certbot command is managed by a snap package
+  assert:
+    quiet: true
+    that:
+      - cmd.stat.islnk
+      - cmd.stat.lnk_target == '/snap/bin/certbot'
+      - snap.rc == 0

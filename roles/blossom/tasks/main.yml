@@ -1,0 +1,45 @@
+---
+- name: apt-get install
+  apt:
+    name:
+      - nginx-extras
+      - snapd  # for up-to-date certbot
+    state: present
+    update_cache: true
+  become: true
+  notify:
+    - reset ssh connection
+
+- meta: flush_handlers
+
+- name: Upgrade snapd
+  community.general.snap:
+    name: core
+  become: true
+
+- name: Install certbot
+  community.general.snap:
+    name: certbot
+    classic: true
+  become: true
+  notify:
+    - trust certbot with root
+
+- name: Symlink certbot binary into existing PATH
+  file:
+    path: /usr/bin/certbot
+    src: /snap/bin/certbot
+    state: link
+    force: true
+  become: true
+
+- meta: flush_handlers
+
+- name: Install certbot plugins
+  community.general.snap:
+    name:
+      - certbot-dns-cloudflare
+  become: true
+
+- import_tasks: nginx.yml
+- import_tasks: certbot.yml

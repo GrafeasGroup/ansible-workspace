@@ -1,0 +1,23 @@
+---
+- name: reset ssh connection
+  # NOTE: Repeatedly get "Connection to {ip} closed\r\n" on stderr when
+  #   using `meta: reset_connection`. See also
+  #   https://github.com/ansible-community/molecule-vagrant/issues/1
+  #
+  # meta: reset_connection
+  shell:
+    cmd: sleep 1; pkill -u {{ ansible_ssh_user }} sshd
+  async: 5
+  poll: 1
+
+- name: trust certbot with root
+  command:
+    cmd: "snap set certbot trust-plugin-with-root=ok"
+  become: true
+
+- name: start nginx
+  systemd:
+    name: httpd.service
+    state: started
+    enabled: true
+  become: true
