@@ -37,17 +37,18 @@ _N/a_
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: bots
-      tasks:
-        - import_role: reddit_bot
-          vars:
-            env:
-              NOOP: 1
-            bot_repo: github-repo-name
-            bot_name: shortname-goes-here
-            bot_cmd: bot-command
+```yaml
+---
+- hosts: bots
+  tasks:
+    - import_role: reddit_bot
+      vars:
+        env:
+          NOOP: 1
+        bot_repo: github-repo-name
+        bot_name: shortname-goes-here
+        bot_cmd: bot-command
+```
 
 License
 -------
