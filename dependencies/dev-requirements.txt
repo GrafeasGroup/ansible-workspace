@@ -96,7 +96,7 @@ jmespath==0.10.0
     # via
     #   -c dependencies/requirements.txt
     #   -r dependencies/requirements.in
-linode-api4==5.0.1
+linode_api4==5.0.1
     # via
     #   -c dependencies/requirements.txt
     #   -r dependencies/requirements.in
@@ -177,7 +177,9 @@ ruamel.yaml.clib==0.2.2
 ruamel.yaml==0.17.0
     # via ansible-lint
 selinux==0.2.1
-    # via molecule-vagrant
+    # via
+    #   molecule
+    #   molecule-vagrant
 shellingham==1.4.0
     # via click-completion
 six==1.15.0
@@ -196,7 +198,7 @@ toml==0.10.2
     # via pre-commit
 typing-extensions==3.7.4.3
     # via rich
-urllib3==1.26.4
+urllib3==1.26.5
     # via
     #   -c dependencies/requirements.txt
     #   requests
