@@ -4,16 +4,16 @@
 #
 #    pip-compile --output-file=dependencies/dev-requirements.txt dependencies/dev-requirements.in
 #
-ansible-base==2.10.7
+ansible==4.2.0
+    # via
+    #   -c dependencies/requirements.txt
+    #   -r dependencies/requirements.in
+ansible-core==2.11.5
     # via
     #   -c dependencies/requirements.txt
     #   ansible
 ansible-lint==5.0.6
     # via molecule
-ansible==3.1.0
-    # via
-    #   -c dependencies/requirements.txt
-    #   -r dependencies/requirements.in
 appdirs==1.4.4
     # via virtualenv
 arrow==1.0.3
@@ -43,16 +43,16 @@ chardet==4.0.0
     #   -c dependencies/requirements.txt
     #   binaryornot
     #   requests
-click-completion==0.5.2
-    # via molecule
-click-help-colors==0.9
-    # via molecule
 click==7.1.2
     # via
     #   click-completion
     #   click-help-colors
     #   cookiecutter
     #   molecule
+click-completion==0.5.2
+    # via molecule
+click-help-colors==0.9
+    # via molecule
 colorama==0.4.4
     # via rich
 commonmark==0.9.1
@@ -62,7 +62,7 @@ cookiecutter==1.7.2
 cryptography==3.4.7
     # via
     #   -c dependencies/requirements.txt
-    #   ansible-base
+    #   ansible-core
     #   paramiko
 distlib==0.3.1
     # via virtualenv
@@ -82,21 +82,21 @@ idna==2.10
     # via
     #   -c dependencies/requirements.txt
     #   requests
-jinja2-time==0.2.0
-    # via cookiecutter
 jinja2==2.11.3
     # via
     #   -c dependencies/requirements.txt
-    #   ansible-base
+    #   ansible-core
     #   click-completion
     #   cookiecutter
     #   jinja2-time
     #   molecule
+jinja2-time==0.2.0
+    # via cookiecutter
 jmespath==0.10.0
     # via
     #   -c dependencies/requirements.txt
     #   -r dependencies/requirements.in
-linode_api4==5.0.1
+linode-api4==5.0.1
     # via
     #   -c dependencies/requirements.txt
     #   -r dependencies/requirements.in
@@ -107,18 +107,18 @@ markupsafe==1.1.1
     #   jinja2
 mccabe==0.6.1
     # via flake8
-molecule-vagrant==0.6.1
-    # via -r dependencies/dev-requirements.in
 molecule[lint]==3.3.0
     # via
     #   -r dependencies/dev-requirements.in
     #   molecule-vagrant
+molecule-vagrant==0.6.1
+    # via -r dependencies/dev-requirements.in
 nodeenv==1.5.0
     # via pre-commit
 packaging==20.9
     # via
     #   -c dependencies/requirements.txt
-    #   ansible-base
+    #   ansible-core
     #   ansible-lint
     #   molecule
 paramiko==2.7.2
@@ -156,7 +156,7 @@ python-vagrant==0.5.15
 pyyaml==5.4.1
     # via
     #   -c dependencies/requirements.txt
-    #   ansible-base
+    #   ansible-core
     #   ansible-lint
     #   molecule
     #   molecule-vagrant
@@ -167,15 +167,19 @@ requests==2.25.1
     #   -c dependencies/requirements.txt
     #   cookiecutter
     #   linode-api4
+resolvelib==0.5.4
+    # via
+    #   -c dependencies/requirements.txt
+    #   ansible-core
 rich==10.0.0
     # via
     #   ansible-lint
     #   enrich
     #   molecule
-ruamel.yaml.clib==0.2.2
-    # via ruamel.yaml
 ruamel.yaml==0.17.0
     # via ansible-lint
+ruamel.yaml.clib==0.2.2
+    # via ruamel.yaml
 selinux==0.2.1
     # via
     #   molecule
